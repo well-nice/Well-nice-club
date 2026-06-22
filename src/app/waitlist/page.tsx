@@ -67,7 +67,7 @@ export default function WaitlistPage() {
               Submit application
             </Button>
             <p className="text-xs leading-5 text-neutral-500">
-              Submissions enter Payload with status "new" for admin review, approval, invitation, joining, or rejection.
+              Submissions enter Payload with status &quot;new&quot; for admin review, approval, invitation, joining, or rejection.
             </p>
           </form>
         </Card>

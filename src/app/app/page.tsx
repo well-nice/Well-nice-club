@@ -56,7 +56,7 @@ export default function MemberHomePage() {
               <CardEyebrow className="text-white/45">Concierge prompt</CardEyebrow>
               <CardTitle className="mt-3 text-white">What should we find for you?</CardTitle>
               <CardDescription className="mt-3 text-white/60">
-                Ask for a place, product, trip, gift, family plan, or a more specific version of "something good".
+                Ask for a place, product, trip, gift, family plan, or a more specific version of &quot;something good&quot;.
               </CardDescription>
               <Button asChild className="mt-6" variant="outline">
                 <Link href="/app/concierge">Start a request</Link>

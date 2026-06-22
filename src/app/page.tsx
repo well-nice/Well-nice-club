@@ -18,7 +18,7 @@ export default function HomePage() {
               A quieter kind of community.
             </h1>
             <p className="mt-8 max-w-xl text-xl leading-8 text-neutral-600">
-              Well Nice is a members' club for people who care about how things are made. Clarity, not complexity.
+              Well Nice is a members&apos; club for people who care about how things are made. Clarity, not complexity.
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
@@ -88,7 +88,7 @@ export default function HomePage() {
           <Card className="grid gap-8 bg-neutral-950 p-8 text-white lg:grid-cols-[0.9fr_1.1fr] lg:p-12">
             <div>
               <Sparkles className="h-8 w-8" />
-              <h2 className="mt-8 text-4xl font-semibold tracking-[-0.06em]">The Concierge is the club's tastemaker.</h2>
+              <h2 className="mt-8 text-4xl font-semibold tracking-[-0.06em]">The Concierge is the club&apos;s tastemaker.</h2>
               <p className="mt-5 text-white/65">
                 Ask for places, products, experiences, travel, food, independent brands, gifts, family ideas, and creative inspiration.
               </p>

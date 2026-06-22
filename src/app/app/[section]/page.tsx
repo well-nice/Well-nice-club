@@ -41,12 +41,12 @@ export default async function SectionPage({ params }: SectionPageProps) {
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {content.items.map((item) => (
-            <Card key={item.title}>
+            <Card key={getItemTitle(item)}>
               {"category" in item ? <CardEyebrow>{item.category}</CardEyebrow> : null}
               {"type" in item ? <CardEyebrow>{item.type}</CardEyebrow> : null}
               {"meta" in item ? <CardEyebrow>{item.meta}</CardEyebrow> : null}
               {"code" in item ? <CardEyebrow>{item.code}</CardEyebrow> : null}
-              <CardTitle className="mt-3">{item.title}</CardTitle>
+              <CardTitle className="mt-3">{getItemTitle(item)}</CardTitle>
               <CardDescription className="mt-3">
                 {"description" in item
                   ? item.description
@@ -131,4 +131,8 @@ function AccountPanel() {
 
 function isSectionKey(section: string): section is SectionKey {
   return section in sectionContent;
+}
+
+function getItemTitle(item: (typeof sectionContent)[SectionKey]["items"][number]) {
+  return "title" in item ? item.title : item.name;
 }

@@ -13,7 +13,7 @@ export default function JoinPage() {
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Membership</p>
           <h1 className="mt-4 text-5xl font-semibold leading-none tracking-[-0.07em] sm:text-7xl">
-            Join the club, then enter the members' app.
+            Join the club, then enter the members&apos; app.
           </h1>
           <p className="mt-6 text-lg leading-8 text-neutral-600">
             Access is granted only after Stripe confirms the subscription through a verified webhook.
