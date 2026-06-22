@@ -1,0 +1,57 @@
+{
+  "name": "well-nice-club",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A premium digital members club for Well Nice.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/well-nice/Well-nice-club.git"
+  },
+  "keywords": [
+    "well-nice",
+    "members-club",
+    "nextjs",
+    "payload",
+    "stripe"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/well-nice/Well-nice-club/issues"
+  },
+  "homepage": "https://github.com/well-nice/Well-nice-club#readme",
+  "dependencies": {
+    "@clerk/nextjs": "^7.5.7",
+    "@payloadcms/db-postgres": "^3.85.1",
+    "@payloadcms/next": "^3.85.1",
+    "@payloadcms/richtext-lexical": "^3.85.1",
+    "@radix-ui/react-slot": "^1.3.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.21.0",
+    "next": "^15.4.11",
+    "payload": "^3.85.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "stripe": "^22.2.3",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/node": "^26.0.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^15.4.11",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3"
+  }
+}
