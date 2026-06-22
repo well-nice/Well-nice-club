@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getMemberByClerkUserId, getMemberByStripeIds } from "@/lib/member-access";
+import { PayloadNotConfiguredError, getPayloadClient } from "@/lib/payload/client";
 import { getStripe, membershipStatusFromSubscription } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -36,12 +38,70 @@ export async function POST(request: Request) {
   const membershipUpdate = deriveMembershipUpdate(event);
 
   if (membershipUpdate) {
-    // This is the only place membership access should become active.
-    // Wire this object to the Payload Member collection after database credentials are configured.
-    return NextResponse.json({ received: true, membershipUpdate });
+    try {
+      const member = await upsertMembershipFromStripe(membershipUpdate);
+      return NextResponse.json({ received: true, memberId: member?.id ?? null, membershipUpdate });
+    } catch (error) {
+      if (error instanceof PayloadNotConfiguredError) {
+        return NextResponse.json(
+          { error: "Payload is not configured.", next: "Set DATABASE_URL and PAYLOAD_SECRET." },
+          { status: 503 }
+        );
+      }
+
+      throw error;
+    }
   }
 
   return NextResponse.json({ received: true });
+}
+
+type MembershipUpdate = NonNullable<ReturnType<typeof deriveMembershipUpdate>>;
+
+async function upsertMembershipFromStripe(update: MembershipUpdate) {
+  const payload = await getPayloadClient();
+  const existing = update.clerkUserId
+    ? await getMemberByClerkUserId(update.clerkUserId)
+    : await getMemberByStripeIds({
+        stripeCustomerId: update.stripeCustomerId,
+        stripeSubscriptionId: update.stripeSubscriptionId
+      });
+
+  if (existing) {
+    return payload.update({
+      collection: "members",
+      id: existing.id,
+      data: {
+        stripeCustomerId: update.stripeCustomerId,
+        stripeSubscriptionId: update.stripeSubscriptionId,
+        plan: update.plan,
+        membershipStatus: update.membershipStatus
+      },
+      overrideAccess: true
+    });
+  }
+
+  if (!update.clerkUserId) {
+    return null;
+  }
+
+  return payload.create({
+    collection: "members",
+    data: {
+      clerkUserId: update.clerkUserId,
+      email: update.email || `${update.clerkUserId}@wellnice.local`,
+      name: update.name || "Well Nice Member",
+      stripeCustomerId: update.stripeCustomerId,
+      stripeSubscriptionId: update.stripeSubscriptionId,
+      plan: update.plan,
+      membershipStatus: update.membershipStatus,
+      role: "member",
+      directoryVisible: false,
+      onboardingComplete: false,
+      banned: false
+    },
+    overrideAccess: true
+  });
 }
 
 function deriveMembershipUpdate(event: Stripe.Event) {
@@ -50,6 +110,8 @@ function deriveMembershipUpdate(event: Stripe.Event) {
 
     return {
       clerkUserId: session.metadata?.clerkUserId || session.client_reference_id,
+      email: session.customer_details?.email || undefined,
+      name: session.customer_details?.name || undefined,
       stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
       stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : session.subscription?.id,
       plan: session.metadata?.plan,

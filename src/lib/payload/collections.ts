@@ -1,5 +1,15 @@
 import type { CollectionConfig } from "payload";
 
+export const Admins: CollectionConfig = {
+  slug: "admins",
+  auth: true,
+  admin: { useAsTitle: "email" },
+  fields: [
+    { name: "name", type: "text", required: true },
+    { name: "role", type: "select", defaultValue: "admin", options: ["moderator", "editor", "admin"], required: true }
+  ]
+};
+
 export const Waitlist: CollectionConfig = {
   slug: "waitlist",
   admin: { useAsTitle: "email" },
@@ -71,7 +81,7 @@ export const Posts: CollectionConfig = {
   admin: { useAsTitle: "title" },
   fields: [
     { name: "title", type: "text", required: true },
-    { name: "body", type: "richText", required: true },
+    { name: "body", type: "textarea", required: true },
     { name: "author", type: "relationship", relationTo: "members", required: true },
     { name: "space", type: "relationship", relationTo: "spaces", required: true },
     { name: "images", type: "array", fields: [{ name: "image", type: "upload", relationTo: "media" }] },
@@ -103,7 +113,7 @@ export const Journal: CollectionConfig = {
     { name: "slug", type: "text", required: true, unique: true },
     { name: "excerpt", type: "textarea", required: true },
     { name: "heroImage", type: "upload", relationTo: "media" },
-    { name: "body", type: "richText", required: true },
+    { name: "body", type: "textarea", required: true },
     {
       name: "category",
       type: "select",
@@ -216,6 +226,7 @@ export const Reports: CollectionConfig = {
 };
 
 export const collections: CollectionConfig[] = [
+  Admins,
   Media,
   Waitlist,
   Members,

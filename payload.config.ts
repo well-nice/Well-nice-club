@@ -5,7 +5,7 @@ import { collections } from "@/lib/payload/collections";
 
 export default buildConfig({
   admin: {
-    user: "members",
+    user: "admins",
     meta: {
       titleSuffix: " - Well Nice Club"
     }

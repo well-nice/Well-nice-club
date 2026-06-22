@@ -1,24 +1,40 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getMemberByClerkUserId, isClerkConfigured } from "@/lib/member-access";
+import { PayloadNotConfiguredError } from "@/lib/payload/client";
 import { getStripe } from "@/lib/stripe";
 import { getAppUrl } from "@/lib/utils";
 
-export async function POST(request: Request) {
-  const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY);
-  const { userId } = hasClerk ? await auth() : { userId: "local-preview-user" };
+export async function POST() {
+  const { userId } = isClerkConfigured() ? await auth() : { userId: "local-preview-user" };
 
   if (!userId) {
     return NextResponse.redirect(`${getAppUrl()}/sign-in?redirect_url=/app/account`, 303);
   }
 
-  const formData = await request.formData();
-  const customerId = formData.get("stripeCustomerId")?.toString() || process.env.STRIPE_PREVIEW_CUSTOMER_ID;
+  let customerId: unknown = process.env.STRIPE_PREVIEW_CUSTOMER_ID;
 
-  if (!customerId) {
+  try {
+    const member = await getMemberByClerkUserId(userId);
+    customerId = member?.stripeCustomerId || customerId;
+  } catch (error) {
+    if (error instanceof PayloadNotConfiguredError && !customerId) {
+      return NextResponse.json(
+        { error: "Payload is not configured.", next: "Set DATABASE_URL and PAYLOAD_SECRET." },
+        { status: 503 }
+      );
+    }
+
+    if (!(error instanceof PayloadNotConfiguredError)) {
+      throw error;
+    }
+  }
+
+  if (typeof customerId !== "string" || !customerId) {
     return NextResponse.json(
       {
         error: "Stripe customer id is required.",
-        next: "Read stripeCustomerId from the Payload Member record for the authenticated Clerk user."
+        next: "Store stripeCustomerId on the Payload Member record from the Stripe webhook."
       },
       { status: 409 }
     );

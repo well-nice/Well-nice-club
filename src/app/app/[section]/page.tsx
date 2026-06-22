@@ -4,15 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardEyebrow, CardTitle } from "@/components/ui/card";
 import { sectionContent, type SectionKey } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 type SectionPageProps = {
   params: Promise<{
     section: string;
   }>;
 };
-
-export function generateStaticParams() {
-  return Object.keys(sectionContent).map((section) => ({ section }));
-}
 
 export default async function SectionPage({ params }: SectionPageProps) {
   const { section } = await params;
