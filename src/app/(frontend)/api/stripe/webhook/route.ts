@@ -49,6 +49,17 @@ export async function POST(request: Request) {
         );
       }
 
+      if (error instanceof UnmappedStripeMemberError) {
+        return NextResponse.json(
+          {
+            error: "Unable to map Stripe event to a Payload member.",
+            stripeCustomerId: error.stripeCustomerId,
+            stripeSubscriptionId: error.stripeSubscriptionId
+          },
+          { status: 500 }
+        );
+      }
+
       throw error;
     }
   }
@@ -57,6 +68,16 @@ export async function POST(request: Request) {
 }
 
 type MembershipUpdate = NonNullable<ReturnType<typeof deriveMembershipUpdate>>;
+
+class UnmappedStripeMemberError extends Error {
+  constructor(
+    readonly stripeCustomerId?: string,
+    readonly stripeSubscriptionId?: string
+  ) {
+    super("Unable to map Stripe event to a Payload member.");
+    this.name = "UnmappedStripeMemberError";
+  }
+}
 
 async function upsertMembershipFromStripe(update: MembershipUpdate) {
   const payload = await getPayloadClient();
@@ -79,6 +100,10 @@ async function upsertMembershipFromStripe(update: MembershipUpdate) {
       data,
       overrideAccess: true
     });
+  }
+
+  if (update.statusSource !== "checkout" && (update.stripeCustomerId || update.stripeSubscriptionId)) {
+    throw new UnmappedStripeMemberError(update.stripeCustomerId, update.stripeSubscriptionId);
   }
 
   if (!update.clerkUserId) {

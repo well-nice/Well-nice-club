@@ -27,7 +27,8 @@ export async function POST(request: Request) {
   const { userId } = await auth();
 
   if (!userId) {
-    return NextResponse.redirect(`${getAppUrl()}/sign-up?redirect_url=/join`, 303);
+    const redirectUrl = `/join?plan=${encodeURIComponent(parsed.data.planId)}`;
+    return NextResponse.redirect(`${getAppUrl()}/sign-up?redirect_url=${encodeURIComponent(redirectUrl)}`, 303);
   }
 
   const stripe = getStripe();
