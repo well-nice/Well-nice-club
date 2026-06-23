@@ -70,12 +70,14 @@ export async function POST(request: Request) {
 type MembershipUpdate = NonNullable<ReturnType<typeof deriveMembershipUpdate>>;
 
 class UnmappedStripeMemberError extends Error {
-  constructor(
-    readonly stripeCustomerId?: string,
-    readonly stripeSubscriptionId?: string
-  ) {
+  readonly stripeCustomerId?: string;
+  readonly stripeSubscriptionId?: string;
+
+  constructor(stripeCustomerId?: string, stripeSubscriptionId?: string) {
     super("Unable to map Stripe event to a Payload member.");
     this.name = "UnmappedStripeMemberError";
+    this.stripeCustomerId = stripeCustomerId;
+    this.stripeSubscriptionId = stripeSubscriptionId;
   }
 }
 
