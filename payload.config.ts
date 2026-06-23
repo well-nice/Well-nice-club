@@ -1,4 +1,5 @@
 import { postgresAdapter } from "@payloadcms/db-postgres";
+import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { buildConfig } from "payload";
 import { collections } from "./src/lib/payload/collections.ts";
 
@@ -15,6 +16,7 @@ if (!payloadSecret) {
 
 export default buildConfig({
   admin: {
+    dateFormat: "dd MMM yyyy",
     user: "admins",
     meta: {
       titleSuffix: " - Well Nice Club"
@@ -27,6 +29,7 @@ export default buildConfig({
     },
     push: process.env.PAYLOAD_DB_PUSH === "true"
   }),
+  editor: lexicalEditor(),
   secret: payloadSecret,
   typescript: {
     outputFile: "src/payload-types.ts"
