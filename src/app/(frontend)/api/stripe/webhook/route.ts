@@ -102,7 +102,7 @@ async function upsertMembershipFromStripe(update: MembershipUpdate) {
     });
   }
 
-  if (update.statusSource !== "checkout" && (update.stripeCustomerId || update.stripeSubscriptionId)) {
+  if (isBillingStatusSource(update.statusSource) && (update.stripeCustomerId || update.stripeSubscriptionId)) {
     throw new UnmappedStripeMemberError(update.stripeCustomerId, update.stripeSubscriptionId);
   }
 
@@ -154,6 +154,10 @@ function getNextMembershipStatus(existing: Record<string, unknown>, update: Memb
   }
 
   return update.membershipStatus;
+}
+
+function isBillingStatusSource(statusSource: MembershipUpdate["statusSource"]) {
+  return statusSource === "subscription" || statusSource === "invoice";
 }
 
 function compact<T extends Record<string, unknown>>(value: T) {

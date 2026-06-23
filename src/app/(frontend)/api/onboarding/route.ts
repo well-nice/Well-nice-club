@@ -43,6 +43,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (memberRecord.membershipStatus !== "active") {
+      return NextResponse.json(
+        {
+          error: "Active membership is required before onboarding can be completed.",
+          membershipStatus: memberRecord.membershipStatus,
+          redirectTo: "/join"
+        },
+        { status: 403 }
+      );
+    }
+
     const member = await payload.update({
       collection: "members",
       id: memberRecord.id,
