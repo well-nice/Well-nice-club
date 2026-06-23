@@ -38,8 +38,8 @@
     "lucide-react": "^1.21.0",
     "next": "15.4.11",
     "payload": "^3.85.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "react": "^19.1.4",
+    "react-dom": "^19.1.4",
     "stripe": "^22.2.3",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
