@@ -24,7 +24,9 @@ export async function POST(request: Request) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.redirect("/sign-in?redirect_url=/onboarding", 303);
+      const signInUrl = new URL("/sign-in", request.url);
+      signInUrl.searchParams.set("redirect_url", "/onboarding");
+      return NextResponse.redirect(signInUrl, 303);
     }
 
     const payload = await getPayloadClient();
