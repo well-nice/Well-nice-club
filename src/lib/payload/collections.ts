@@ -1,6 +1,6 @@
-import type { CollectionConfig } from "payload";
+import type { Access, CollectionConfig } from "payload";
 
-const adminsOnly = ({ req: { user } }: { req: { user?: unknown } }) => Boolean(user);
+const adminsOnly: Access = ({ req }) => Boolean(req.user);
 
 export const Admins: CollectionConfig = {
   slug: "admins",
@@ -12,12 +12,6 @@ export const Admins: CollectionConfig = {
   admin: {
     defaultColumns: ["email", "name", "role", "updatedAt"],
     useAsTitle: "email"
-  },
-  access: {
-    read: adminsOnly,
-    create: adminsOnly,
-    update: adminsOnly,
-    delete: adminsOnly
   },
   fields: [
     {
