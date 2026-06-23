@@ -14,7 +14,8 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || "postgres://wellnice:wellnice@localhost:5432/wellnice"
-    }
+    },
+    push: process.env.PAYLOAD_DB_PUSH === "true"
   }),
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "development-only-payload-secret",
