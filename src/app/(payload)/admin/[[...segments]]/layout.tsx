@@ -1,7 +1,7 @@
 import { handleServerFunctions, RootLayout } from "@payloadcms/next/layouts";
 import type { ServerFunctionClient } from "payload";
 import configPromise from "../../../../../payload.config";
-import { importMap } from "../importMap";
+import { importMap } from "../importMap.js";
 
 const serverFunction: ServerFunctionClient = async (args) => {
   "use server";
