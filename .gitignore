@@ -19,7 +19,6 @@ yarn-error.log*
 pnpm-debug.log*
 
 # env
-.env
 .env*.local
 
 # vercel
@@ -27,3 +26,11 @@ pnpm-debug.log*
 
 # typescript
 *.tsbuildinfo
+
+.projects/cache
+.projects/vault
+.projects/state.test.json
+.projects/state.local.test.json
+.env
+.env.*
+!.env.example
