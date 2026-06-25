@@ -24,7 +24,7 @@ export default function WaitlistPage() {
         </section>
 
         <Card>
-          <form action="/api/waitlist" className="space-y-5" method="post">
+          <form action="/api/app/waitlist" className="space-y-5" method="post">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2 text-sm font-medium">
                 Name

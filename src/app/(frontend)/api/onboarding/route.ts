@@ -1,6 +1,7 @@
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { onboardingSchema, parseJson, readRequestBody } from "@/lib/api";
-import { ensureMemberForCurrentUser } from "@/lib/member-access";
+import { getMemberByClerkUserId, isClerkConfigured } from "@/lib/member-access";
 import { PayloadNotConfiguredError, getPayloadClient } from "@/lib/payload/client";
 import { toPayloadArray } from "@/lib/payload/format";
 
@@ -13,16 +14,49 @@ export async function POST(request: Request) {
   }
 
   try {
-    const payload = await getPayloadClient();
-    const result = await ensureMemberForCurrentUser(parsed.data);
+    if (!isClerkConfigured()) {
+      return NextResponse.json(
+        { error: "Clerk is required for onboarding.", next: "Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY." },
+        { status: 503 }
+      );
+    }
 
-    if ("error" in result) {
-      return result.error;
+    const { userId } = await auth();
+
+    if (!userId) {
+      const signInUrl = new URL("/sign-in", request.url);
+      signInUrl.searchParams.set("redirect_url", "/onboarding");
+      return NextResponse.redirect(signInUrl, 303);
+    }
+
+    const payload = await getPayloadClient();
+    const memberRecord = await getMemberByClerkUserId(userId);
+
+    if (!memberRecord) {
+      return NextResponse.json(
+        {
+          error: "Membership record not found.",
+          next: "Join and complete Stripe Checkout before onboarding.",
+          redirectTo: "/join"
+        },
+        { status: 409 }
+      );
+    }
+
+    if (memberRecord.membershipStatus !== "active") {
+      return NextResponse.json(
+        {
+          error: "Active membership is required before onboarding can be completed.",
+          membershipStatus: memberRecord.membershipStatus,
+          redirectTo: "/join"
+        },
+        { status: 403 }
+      );
     }
 
     const member = await payload.update({
       collection: "members",
-      id: result.member.id,
+      id: memberRecord.id,
       data: {
         name: parsed.data.name,
         bio: parsed.data.bio,

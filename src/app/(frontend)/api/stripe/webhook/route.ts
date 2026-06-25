@@ -49,6 +49,17 @@ export async function POST(request: Request) {
         );
       }
 
+      if (error instanceof UnmappedStripeMemberError) {
+        return NextResponse.json(
+          {
+            error: "Unable to map Stripe event to a Payload member.",
+            stripeCustomerId: error.stripeCustomerId,
+            stripeSubscriptionId: error.stripeSubscriptionId
+          },
+          { status: 500 }
+        );
+      }
+
       throw error;
     }
   }
@@ -58,27 +69,43 @@ export async function POST(request: Request) {
 
 type MembershipUpdate = NonNullable<ReturnType<typeof deriveMembershipUpdate>>;
 
+class UnmappedStripeMemberError extends Error {
+  readonly stripeCustomerId?: string;
+  readonly stripeSubscriptionId?: string;
+
+  constructor(stripeCustomerId?: string, stripeSubscriptionId?: string) {
+    super("Unable to map Stripe event to a Payload member.");
+    this.name = "UnmappedStripeMemberError";
+    this.stripeCustomerId = stripeCustomerId;
+    this.stripeSubscriptionId = stripeSubscriptionId;
+  }
+}
+
 async function upsertMembershipFromStripe(update: MembershipUpdate) {
   const payload = await getPayloadClient();
-  const existing = update.clerkUserId
-    ? await getMemberByClerkUserId(update.clerkUserId)
-    : await getMemberByStripeIds({
-        stripeCustomerId: update.stripeCustomerId,
-        stripeSubscriptionId: update.stripeSubscriptionId
-      });
+  const existing = await findExistingMember(update);
 
   if (existing) {
+    const data = compact({
+      clerkUserId: update.clerkUserId,
+      email: update.email,
+      name: update.name,
+      stripeCustomerId: update.stripeCustomerId,
+      stripeSubscriptionId: update.stripeSubscriptionId,
+      plan: update.plan,
+      membershipStatus: getNextMembershipStatus(existing, update)
+    });
+
     return payload.update({
       collection: "members",
       id: existing.id,
-      data: {
-        stripeCustomerId: update.stripeCustomerId,
-        stripeSubscriptionId: update.stripeSubscriptionId,
-        plan: update.plan,
-        membershipStatus: update.membershipStatus
-      },
+      data,
       overrideAccess: true
     });
+  }
+
+  if (isBillingStatusSource(update.statusSource) && (update.stripeCustomerId || update.stripeSubscriptionId)) {
+    throw new UnmappedStripeMemberError(update.stripeCustomerId, update.stripeSubscriptionId);
   }
 
   if (!update.clerkUserId) {
@@ -87,7 +114,7 @@ async function upsertMembershipFromStripe(update: MembershipUpdate) {
 
   return payload.create({
     collection: "members",
-    data: {
+    data: compact({
       clerkUserId: update.clerkUserId,
       email: update.email || `${update.clerkUserId}@wellnice.local`,
       name: update.name || "Well Nice Member",
@@ -99,9 +126,44 @@ async function upsertMembershipFromStripe(update: MembershipUpdate) {
       directoryVisible: false,
       onboardingComplete: false,
       banned: false
-    },
+    }),
     overrideAccess: true
   });
+}
+
+async function findExistingMember(update: MembershipUpdate) {
+  if (update.clerkUserId) {
+    const byClerk = await getMemberByClerkUserId(update.clerkUserId);
+
+    if (byClerk) {
+      return byClerk;
+    }
+  }
+
+  return getMemberByStripeIds({
+    stripeCustomerId: update.stripeCustomerId,
+    stripeSubscriptionId: update.stripeSubscriptionId
+  });
+}
+
+function getNextMembershipStatus(existing: Record<string, unknown>, update: MembershipUpdate) {
+  if (update.statusSource !== "checkout") {
+    return update.membershipStatus;
+  }
+
+  if (["active", "past_due", "cancelled"].includes(String(existing.membershipStatus))) {
+    return undefined;
+  }
+
+  return update.membershipStatus;
+}
+
+function isBillingStatusSource(statusSource: MembershipUpdate["statusSource"]) {
+  return statusSource === "subscription" || statusSource === "invoice";
+}
+
+function compact<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(Object.entries(value).filter(([, entryValue]) => entryValue !== undefined)) as Partial<T>;
 }
 
 function deriveMembershipUpdate(event: Stripe.Event) {
@@ -115,7 +177,8 @@ function deriveMembershipUpdate(event: Stripe.Event) {
       stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
       stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : session.subscription?.id,
       plan: session.metadata?.plan,
-      membershipStatus: "pending"
+      membershipStatus: "pending",
+      statusSource: "checkout"
     };
   }
 
@@ -131,7 +194,8 @@ function deriveMembershipUpdate(event: Stripe.Event) {
       stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id,
       stripeSubscriptionId: subscription.id,
       plan: subscription.metadata.plan,
-      membershipStatus: membershipStatusFromSubscription(subscription.status)
+      membershipStatus: membershipStatusFromSubscription(subscription.status),
+      statusSource: "subscription"
     };
   }
 
@@ -144,7 +208,8 @@ function deriveMembershipUpdate(event: Stripe.Event) {
         typeof invoice.parent?.subscription_details?.subscription === "string"
           ? invoice.parent.subscription_details.subscription
           : invoice.parent?.subscription_details?.subscription?.id,
-      membershipStatus: event.type === "invoice.payment_succeeded" ? "active" : "past_due"
+      membershipStatus: event.type === "invoice.payment_succeeded" ? "active" : "past_due",
+      statusSource: "invoice"
     };
   }
 

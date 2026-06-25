@@ -1,14 +1,14 @@
 # Well Nice Club
 
-A Next.js 15 prototype and implementation scaffold for `club.wellnice.com`: a premium paid members club combining membership, community, editorial content, events, recommendations, an AI-powered Concierge, member benefits, and Payload CMS operations.
+A Next.js 15 prototype and implementation scaffold for `club.wellnice.com`.
 
 ## Stack
 
 - Next.js 15 App Router, TypeScript, Tailwind CSS, shadcn-style local UI components, Lucide icons
 - Clerk-ready authentication
 - Stripe Billing, Checkout Sessions, Customer Portal, and verified webhooks
-- Payload CMS collection schema for the operational back office
-- Supabase PostgreSQL-ready Payload database adapter
+- Payload CMS mounted inside the Next.js app
+- Postgres through `@payloadcms/db-postgres`
 
 ## Getting started
 
@@ -18,48 +18,29 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Set the environment values in `.env.local` before enabling live auth, billing, CMS, or Concierge behavior.
+Set `DATABASE_URL` and `PAYLOAD_SECRET` in `.env.local` before running Payload locally.
 
 ## Key routes
 
-- `/` - editorial landing page based on the prototype direction
+- `/` - public landing page
 - `/waitlist` - waitlist application form
-- `/join` - Founding, Monthly, and Annual membership plans
-- `/sign-in` and `/sign-up` - Clerk auth surfaces
-- `/onboarding` - profile, interests, and optional introduction
-- `/app` - member home feed
-- `/app/spaces`, `/app/journal`, `/app/recommendations`, `/app/concierge`, `/app/events`, `/app/members`, `/app/drops`, `/app/account`
+- `/join` - membership plans
 - `/admin` - Payload CMS admin
 
-## API routes
+## Payload routes
 
-- `POST /api/waitlist`
-- `POST /api/onboarding`
-- `POST /api/posts`
-- `POST /api/comments`
-- `POST /api/reports`
-- `POST /api/concierge`
-- `POST /api/stripe/create-checkout-session`
-- `POST /api/stripe/create-portal-session`
-- `POST /api/stripe/webhook`
-- `/api/[...slug]` - Payload REST API
-- `/api/graphql` and `/api/graphql-playground` - Payload GraphQL API
-
-## Stripe notes
-
-Checkout uses `mode: "subscription"` with Stripe Prices and intentionally does not pass `payment_method_types`, allowing Stripe dynamic payment methods to apply. Member access should only become active from verified Stripe webhook events, never from the Checkout success URL.
-
-Prefer restricted API keys for production Stripe server routes and keep all secrets outside source control.
+- `/admin` - Payload admin UI
+- `/api/[...slug]` - Payload REST API, including protected collection routes such as `/api/waitlist`
+- `/api/graphql` - Payload GraphQL API
+- `/api/graphql-playground` - Payload GraphQL Playground
+- `POST /api/app/waitlist` - public product waitlist submission endpoint that writes to Payload with server-side access override
 
 ## Payload notes
 
-`payload.config.ts` and `src/lib/payload/collections.ts` define the CMS schema from the specification: admins, waitlist, members, spaces, posts, comments, journal, events, recommendations, Concierge requests, Concierge knowledge base, drops, reports, and media.
+`payload.config.ts` and `src/lib/payload/collections.ts` define the CMS collections the current app and design imply:
 
-Once Supabase PostgreSQL and Payload are configured, the route handlers persist to the relevant collections and use the Member record to enforce:
+- `admins`, `waitlist`, `members`, `spaces`, `posts`, `comments`
+- `journal`, `events`, `recommendations`, `concierge-requests`, `concierge-knowledge-base`
+- `drops`, `reports`, and `media`
 
-- authenticated Clerk user
-- active Stripe-confirmed membership
-- onboarding complete
-- not banned
-
-Without Clerk/Payload environment variables, the member app renders in preview mode so local builds and visual review still work. With credentials configured, `/app` and `/app/*` are dynamic server routes that redirect users who fail the membership checks.
+Payload uses `DATABASE_URL` for Postgres and `PAYLOAD_SECRET` for auth/session security. `PAYLOAD_DB_PUSH=true` can be used intentionally when pushing the Payload schema to a database.

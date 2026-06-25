@@ -6,28 +6,41 @@ import { getStripe } from "@/lib/stripe";
 import { getAppUrl } from "@/lib/utils";
 
 export async function POST() {
-  const { userId } = isClerkConfigured() ? await auth() : { userId: "local-preview-user" };
+  if (!isClerkConfigured()) {
+    return NextResponse.json(
+      { error: "Clerk is required for billing portal access.", next: "Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY." },
+      { status: 503 }
+    );
+  }
+
+  const { userId } = await auth();
 
   if (!userId) {
     return NextResponse.redirect(`${getAppUrl()}/sign-in?redirect_url=/app/account`, 303);
   }
 
-  let customerId: unknown = process.env.STRIPE_PREVIEW_CUSTOMER_ID;
+  let customerId: unknown;
 
   try {
     const member = await getMemberByClerkUserId(userId);
-    customerId = member?.stripeCustomerId || customerId;
+
+    if (!member) {
+      return NextResponse.json(
+        { error: "Member record not found.", next: "Complete checkout and allow the Stripe webhook to sync membership first." },
+        { status: 404 }
+      );
+    }
+
+    customerId = member.stripeCustomerId;
   } catch (error) {
-    if (error instanceof PayloadNotConfiguredError && !customerId) {
+    if (error instanceof PayloadNotConfiguredError) {
       return NextResponse.json(
         { error: "Payload is not configured.", next: "Set DATABASE_URL and PAYLOAD_SECRET." },
         { status: 503 }
       );
     }
 
-    if (!(error instanceof PayloadNotConfiguredError)) {
-      throw error;
-    }
+    throw error;
   }
 
   if (typeof customerId !== "string" || !customerId) {

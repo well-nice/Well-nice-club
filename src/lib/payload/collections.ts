@@ -1,71 +1,33 @@
-import type { CollectionConfig, Field } from "payload";
+import type { Access, CollectionConfig, Field } from "payload";
 
-const statusOptions = {
-  waitlist: [
-    { label: "New application", value: "new" },
-    { label: "Approved", value: "approved" },
-    { label: "Invited", value: "invited" },
-    { label: "Joined", value: "joined" },
-    { label: "Rejected", value: "rejected" }
-  ],
-  membership: [
-    { label: "Pending payment", value: "pending" },
-    { label: "Active", value: "active" },
-    { label: "Past due", value: "past_due" },
-    { label: "Cancelled", value: "cancelled" },
-    { label: "Expired", value: "expired" },
-    { label: "Banned", value: "banned" }
-  ],
-  post: [
-    { label: "Draft", value: "draft" },
-    { label: "Published", value: "published" },
-    { label: "Hidden from members", value: "hidden" },
-    { label: "Deleted", value: "deleted" }
-  ],
-  visibility: [
-    { label: "Public", value: "public" },
-    { label: "Members only", value: "members" },
-    { label: "Private", value: "private" }
-  ],
-  concierge: [
-    { label: "New request", value: "new" },
-    { label: "AI drafted", value: "ai_drafted" },
-    { label: "Needs review", value: "needs_review" },
-    { label: "Answered", value: "answered" },
-    { label: "Published to library", value: "published" },
-    { label: "Archived", value: "archived" }
-  ]
+const adminsOnly: Access = ({ req }) => Boolean(req.user);
+
+const protectedAccess = {
+  read: adminsOnly,
+  create: adminsOnly,
+  update: adminsOnly,
+  delete: adminsOnly
 };
 
 const slugField: Field = {
   name: "slug",
   type: "text",
   required: true,
-  unique: true,
-  admin: {
-    description: "Lowercase URL slug, for example south-london-studio-visit.",
-    placeholder: "lowercase-url-slug"
-  }
-};
-
-const tagsField: Field = {
-  name: "tags",
-  type: "array",
-  admin: {
-    description: "Short internal tags for filtering, search, and future Concierge knowledge."
-  },
-  fields: [{ name: "tag", type: "text", required: true }]
+  unique: true
 };
 
 const interestsField = (required = false): Field => ({
   name: "interests",
   type: "array",
-  admin: {
-    description: "Member interests such as Food, Home, Style, Travel, Family, Culture, Music, Objects, Creativity."
-  },
-  fields: [{ name: "interest", type: "text", required }],
+  fields: [{ name: "interest", type: "text", required: true }],
   minRows: required ? 1 : undefined
 });
+
+const tagsField: Field = {
+  name: "tags",
+  type: "array",
+  fields: [{ name: "tag", type: "text", required: true }]
+};
 
 export const Admins: CollectionConfig = {
   slug: "admins",
@@ -76,16 +38,10 @@ export const Admins: CollectionConfig = {
   },
   admin: {
     defaultColumns: ["email", "name", "role", "updatedAt"],
-    description: "People who can access and operate the Well Nice CMS.",
     useAsTitle: "email"
   },
   fields: [
-    {
-      name: "name",
-      type: "text",
-      required: true,
-      admin: { placeholder: "Jane Smith" }
-    },
+    { name: "name", type: "text", required: true },
     {
       name: "role",
       type: "select",
@@ -95,10 +51,7 @@ export const Admins: CollectionConfig = {
         { label: "Editor", value: "editor" },
         { label: "Admin", value: "admin" }
       ],
-      required: true,
-      admin: {
-        description: "Controls what this person should be trusted to manage operationally."
-      }
+      required: true
     }
   ]
 };
@@ -111,121 +64,29 @@ export const Waitlist: CollectionConfig = {
   },
   admin: {
     defaultColumns: ["name", "email", "location", "status", "createdAt"],
-    description: "Review people who have asked to join before they are invited to pay.",
     listSearchableFields: ["name", "email", "location", "instagram", "reason"],
     useAsTitle: "email"
   },
+  access: protectedAccess,
   fields: [
-    { name: "name", type: "text", required: true, admin: { placeholder: "Applicant name" } },
-    { name: "email", type: "email", required: true, admin: { placeholder: "name@example.com" } },
-    { name: "location", type: "text", required: true, admin: { placeholder: "London, Bristol, Glasgow..." } },
-    { name: "instagram", type: "text", admin: { placeholder: "@handle" } },
+    { name: "name", type: "text", required: true },
+    { name: "email", type: "email", required: true },
+    { name: "location", type: "text", required: true },
+    { name: "instagram", type: "text" },
     interestsField(true),
-    {
-      name: "reason",
-      type: "textarea",
-      required: true,
-      admin: {
-        description: "The applicant's answer to why they want to join.",
-        rows: 6
-      }
-    },
+    { name: "reason", type: "textarea", required: true },
     {
       name: "status",
       type: "select",
       defaultValue: "new",
-      options: statusOptions.waitlist,
-      required: true,
-      admin: {
-        description: "Use Approved when they are a good fit; Invited once you have sent the membership invite."
-      }
-    }
-  ]
-};
-
-export const Members: CollectionConfig = {
-  slug: "members",
-  labels: {
-    singular: "Member",
-    plural: "Members"
-  },
-  admin: {
-    defaultColumns: ["name", "email", "membershipStatus", "plan", "location", "onboardingComplete"],
-    description: "Paid member records synced from Clerk and Stripe.",
-    listSearchableFields: ["name", "email", "location", "bio"],
-    useAsTitle: "email"
-  },
-  fields: [
-    {
-      type: "tabs",
-      tabs: [
-        {
-          label: "Profile",
-          fields: [
-            { name: "email", type: "email", required: true },
-            { name: "name", type: "text", required: true },
-            { name: "avatar", type: "upload", relationTo: "media" },
-            { name: "location", type: "text" },
-            { name: "bio", type: "textarea", admin: { rows: 5 } },
-            interestsField(),
-            {
-              name: "directoryVisible",
-              type: "checkbox",
-              defaultValue: false,
-              admin: { description: "Members choose whether they appear in the public member directory." }
-            }
-          ]
-        },
-        {
-          label: "Membership",
-          fields: [
-            {
-              name: "membershipStatus",
-              type: "select",
-              defaultValue: "pending",
-              options: statusOptions.membership,
-              admin: { description: "Access to the app is granted only when this is Active and the member is onboarded." }
-            },
-            {
-              name: "plan",
-              type: "select",
-              options: [
-                { label: "Founding member", value: "founding" },
-                { label: "Monthly", value: "monthly" },
-                { label: "Annual", value: "annual" }
-              ]
-            },
-            { name: "onboardingComplete", type: "checkbox", defaultValue: false },
-            { name: "banned", type: "checkbox", defaultValue: false }
-          ]
-        },
-        {
-          label: "System IDs",
-          fields: [
-            {
-              name: "clerkUserId",
-              type: "text",
-              required: true,
-              unique: true,
-              admin: { description: "Synced from Clerk. Avoid editing manually unless repairing an account." }
-            },
-            { name: "stripeCustomerId", type: "text", admin: { readOnly: true } },
-            { name: "stripeSubscriptionId", type: "text", admin: { readOnly: true } },
-            {
-              name: "role",
-              type: "select",
-              defaultValue: "member",
-              options: [
-                { label: "Guest", value: "guest" },
-                { label: "Member", value: "member" },
-                { label: "Moderator", value: "moderator" },
-                { label: "Editor", value: "editor" },
-                { label: "Admin", value: "admin" }
-              ]
-            }
-          ]
-        }
-      ]
+      options: [
+        { label: "New", value: "new" },
+        { label: "Approved", value: "approved" },
+        { label: "Invited", value: "invited" },
+        { label: "Joined", value: "joined" },
+        { label: "Rejected", value: "rejected" }
+      ],
+      required: true
     }
   ]
 };
@@ -239,120 +100,148 @@ export const Media: CollectionConfig = {
   },
   admin: {
     defaultColumns: ["filename", "alt", "updatedAt"],
-    description: "Shared image and file library for journal, spaces, recommendations, events, and drops.",
     useAsTitle: "filename"
   },
+  access: protectedAccess,
+  fields: [{ name: "alt", type: "text" }]
+};
+
+export const Members: CollectionConfig = {
+  slug: "members",
+  labels: {
+    singular: "Member",
+    plural: "Members"
+  },
+  admin: {
+    defaultColumns: ["name", "email", "membershipStatus", "plan", "location", "onboardingComplete"],
+    listSearchableFields: ["name", "email", "location", "bio"],
+    useAsTitle: "email"
+  },
+  access: protectedAccess,
   fields: [
+    { name: "email", type: "email", required: true },
+    { name: "name", type: "text", required: true },
+    { name: "avatar", type: "upload", relationTo: "media" },
+    { name: "location", type: "text" },
+    { name: "bio", type: "textarea" },
+    interestsField(),
+    { name: "directoryVisible", type: "checkbox", defaultValue: false },
     {
-      name: "alt",
-      type: "text",
-      admin: {
-        description: "Describe the image for accessibility and editorial context.",
-        placeholder: "Ceramic bowls on a kitchen table"
-      }
+      name: "membershipStatus",
+      type: "select",
+      defaultValue: "pending",
+      options: [
+        { label: "Pending payment", value: "pending" },
+        { label: "Active", value: "active" },
+        { label: "Past due", value: "past_due" },
+        { label: "Cancelled", value: "cancelled" },
+        { label: "Expired", value: "expired" },
+        { label: "Banned", value: "banned" }
+      ],
+      required: true
+    },
+    {
+      name: "plan",
+      type: "select",
+      options: [
+        { label: "Founding member", value: "founding" },
+        { label: "Monthly", value: "monthly" },
+        { label: "Annual", value: "annual" }
+      ]
+    },
+    { name: "onboardingComplete", type: "checkbox", defaultValue: false },
+    { name: "banned", type: "checkbox", defaultValue: false },
+    { name: "clerkUserId", type: "text", required: true, unique: true },
+    { name: "stripeCustomerId", type: "text" },
+    { name: "stripeSubscriptionId", type: "text" },
+    {
+      name: "role",
+      type: "select",
+      defaultValue: "member",
+      options: [
+        { label: "Guest", value: "guest" },
+        { label: "Member", value: "member" },
+        { label: "Moderator", value: "moderator" },
+        { label: "Editor", value: "editor" },
+        { label: "Admin", value: "admin" }
+      ],
+      required: true
     }
   ]
 };
 
 export const Spaces: CollectionConfig = {
   slug: "spaces",
-  labels: {
-    singular: "Space",
-    plural: "Spaces"
-  },
+  labels: { singular: "Space", plural: "Spaces" },
   admin: {
     defaultColumns: ["title", "visibility", "order", "updatedAt"],
-    description: "The member rooms that structure the community experience.",
     listSearchableFields: ["title", "description"],
     useAsTitle: "title"
   },
+  access: protectedAccess,
   fields: [
-    { name: "title", type: "text", required: true, admin: { placeholder: "Food & Drink" } },
+    { name: "title", type: "text", required: true },
     slugField,
-    {
-      name: "description",
-      type: "textarea",
-      required: true,
-      admin: { description: "Short member-facing description shown on the Spaces index.", rows: 4 }
-    },
+    { name: "description", type: "textarea", required: true },
     { name: "coverImage", type: "upload", relationTo: "media" },
     {
       name: "visibility",
       type: "select",
       defaultValue: "members",
-      options: statusOptions.visibility,
-      admin: { description: "Most spaces should be Members only." }
+      options: [
+        { label: "Public", value: "public" },
+        { label: "Members only", value: "members" },
+        { label: "Private", value: "private" }
+      ]
     },
-    { name: "order", type: "number", defaultValue: 0, admin: { description: "Lower numbers appear first." } }
+    { name: "order", type: "number", defaultValue: 0 }
   ]
 };
 
 export const Posts: CollectionConfig = {
   slug: "posts",
-  labels: {
-    singular: "Community post",
-    plural: "Community posts"
-  },
+  labels: { singular: "Community post", plural: "Community posts" },
   admin: {
     defaultColumns: ["title", "space", "author", "status", "featured", "pinned", "updatedAt"],
-    description: "Member posts and editorially featured community discussions.",
     listSearchableFields: ["title", "body"],
     useAsTitle: "title"
   },
+  access: protectedAccess,
   fields: [
+    { name: "title", type: "text", required: true },
+    { name: "body", type: "richText", required: true },
+    { name: "author", type: "relationship", relationTo: "members", required: true },
+    { name: "space", type: "relationship", relationTo: "spaces", required: true },
+    { name: "images", type: "array", fields: [{ name: "image", type: "upload", relationTo: "media" }] },
     {
-      type: "tabs",
-      tabs: [
-        {
-          label: "Post",
-          fields: [
-            { name: "title", type: "text", required: true },
-            { name: "body", type: "richText", required: true },
-            { name: "author", type: "relationship", relationTo: "members", required: true },
-            { name: "space", type: "relationship", relationTo: "spaces", required: true },
-            { name: "images", type: "array", fields: [{ name: "image", type: "upload", relationTo: "media" }] }
-          ]
-        },
-        {
-          label: "Moderation",
-          fields: [
-            {
-              name: "status",
-              type: "select",
-              defaultValue: "published",
-              options: statusOptions.post,
-              admin: { description: "Hide instead of deleting when possible, so moderation history is preserved." }
-            },
-            { name: "featured", type: "checkbox", defaultValue: false },
-            { name: "pinned", type: "checkbox", defaultValue: false },
-            { name: "commentsLocked", type: "checkbox", defaultValue: false }
-          ]
-        },
-        {
-          label: "Engagement",
-          fields: [
-            { name: "likes", type: "relationship", relationTo: "members", hasMany: true, admin: { readOnly: true } },
-            { name: "savedBy", type: "relationship", relationTo: "members", hasMany: true, admin: { readOnly: true } }
-          ]
-        }
+      name: "status",
+      type: "select",
+      defaultValue: "published",
+      options: [
+        { label: "Draft", value: "draft" },
+        { label: "Published", value: "published" },
+        { label: "Hidden", value: "hidden" },
+        { label: "Deleted", value: "deleted" }
       ]
-    }
+    },
+    { name: "featured", type: "checkbox", defaultValue: false },
+    { name: "pinned", type: "checkbox", defaultValue: false },
+    { name: "commentsLocked", type: "checkbox", defaultValue: false },
+    { name: "likes", type: "relationship", relationTo: "members", hasMany: true },
+    { name: "savedBy", type: "relationship", relationTo: "members", hasMany: true }
   ]
 };
 
 export const Comments: CollectionConfig = {
   slug: "comments",
-  labels: {
-    singular: "Comment",
-    plural: "Comments"
-  },
+  labels: { singular: "Comment", plural: "Comments" },
   admin: {
     defaultColumns: ["post", "author", "status", "updatedAt"],
-    description: "Nested member comments with basic moderation controls.",
     useAsTitle: "body"
   },
+  access: protectedAccess,
   fields: [
-    { name: "body", type: "textarea", required: true, admin: { rows: 5 } },
+    { name: "body", type: "textarea", required: true },
     { name: "author", type: "relationship", relationTo: "members", required: true },
     { name: "post", type: "relationship", relationTo: "posts", required: true },
     { name: "parent", type: "relationship", relationTo: "comments" },
@@ -371,112 +260,64 @@ export const Comments: CollectionConfig = {
 
 export const Journal: CollectionConfig = {
   slug: "journal",
-  labels: {
-    singular: "Post",
-    plural: "Posts"
-  },
+  labels: { singular: "Journal post", plural: "Journal" },
   admin: {
     defaultColumns: ["title", "category", "publishedAt", "updatedAt"],
-    description: "Editorial posts, guides, interviews, playlists, city guides, and member stories.",
     listSearchableFields: ["title", "excerpt", "metaTitle", "metaDescription"],
     useAsTitle: "title"
   },
+  access: protectedAccess,
   fields: [
+    { name: "title", type: "text", required: true },
+    slugField,
+    { name: "excerpt", type: "textarea", required: true },
     {
-      type: "tabs",
-      tabs: [
-        {
-          label: "Content",
-          fields: [
-            {
-              name: "title",
-              type: "text",
-              required: true,
-              label: "Post Title",
-              admin: { placeholder: "Payload: The best way to build something you truly own" }
-            },
-            slugField,
-            {
-              name: "excerpt",
-              type: "textarea",
-              required: true,
-              admin: { description: "Short standfirst shown in lists and previews.", rows: 3 }
-            },
-            {
-              name: "category",
-              type: "select",
-              options: [
-                { label: "Article", value: "article" },
-                { label: "Interview", value: "interview" },
-                { label: "Guide", value: "guide" },
-                { label: "Playlist", value: "playlist" },
-                { label: "City guide", value: "city-guide" },
-                { label: "Member story", value: "member-story" }
-              ],
-              required: true
-            },
-            { name: "body", type: "richText", required: true, label: "Content" },
-            tagsField
-          ]
-        },
-        {
-          label: "Appearance",
-          fields: [
-            {
-              name: "heroImage",
-              type: "upload",
-              relationTo: "media",
-              label: "Banner Image",
-              required: true
-            },
-            { name: "visibility", type: "select", defaultValue: "members", options: statusOptions.visibility.slice(0, 2) },
-            { name: "publishedAt", type: "date", admin: { description: "Leave empty while drafting." } }
-          ]
-        },
-        {
-          label: "SEO",
-          fields: [
-            {
-              name: "metaTitle",
-              type: "text",
-              admin: {
-                description: "Optional override for browser title and sharing cards."
-              }
-            },
-            {
-              name: "metaDescription",
-              type: "textarea",
-              admin: {
-                description: "Optional short description for search and social previews.",
-                rows: 3
-              }
-            }
-          ]
-        }
+      name: "category",
+      type: "select",
+      options: [
+        { label: "Article", value: "article" },
+        { label: "Interview", value: "interview" },
+        { label: "Guide", value: "guide" },
+        { label: "Playlist", value: "playlist" },
+        { label: "City guide", value: "city-guide" },
+        { label: "Member story", value: "member-story" }
+      ],
+      required: true
+    },
+    { name: "body", type: "richText", required: true },
+    { name: "heroImage", type: "upload", relationTo: "media" },
+    {
+      name: "visibility",
+      type: "select",
+      defaultValue: "members",
+      options: [
+        { label: "Public", value: "public" },
+        { label: "Members only", value: "members" }
       ]
-    }
+    },
+    { name: "publishedAt", type: "date" },
+    { name: "metaTitle", type: "text" },
+    { name: "metaDescription", type: "textarea" },
+    tagsField
   ]
 };
 
 export const Events: CollectionConfig = {
   slug: "events",
-  labels: {
-    singular: "Event",
-    plural: "Events"
-  },
+  labels: { singular: "Event", plural: "Events" },
   admin: {
     defaultColumns: ["title", "date", "location", "status", "visibility"],
-    description: "Meetups, walks, talks, studio visits, online sessions, and product launches.",
     listSearchableFields: ["title", "location", "description"],
     useAsTitle: "title"
   },
+  access: protectedAccess,
   fields: [
     { name: "title", type: "text", required: true },
     slugField,
     { name: "date", type: "date", required: true },
     { name: "location", type: "text", required: true },
-    { name: "description", type: "textarea", required: true, admin: { rows: 8 } },
-    { name: "capacity", type: "number", admin: { description: "Leave blank for uncapped or online events." } },
+    { name: "description", type: "textarea", required: true },
+    { name: "capacity", type: "number" },
     { name: "attendees", type: "relationship", relationTo: "members", hasMany: true },
     {
       name: "status",
@@ -489,172 +330,125 @@ export const Events: CollectionConfig = {
         { label: "Cancelled", value: "cancelled" }
       ]
     },
-    { name: "visibility", type: "select", defaultValue: "members", options: statusOptions.visibility.slice(0, 2) }
+    {
+      name: "visibility",
+      type: "select",
+      defaultValue: "members",
+      options: [
+        { label: "Public", value: "public" },
+        { label: "Members only", value: "members" }
+      ]
+    }
   ]
 };
 
 export const Recommendations: CollectionConfig = {
   slug: "recommendations",
-  labels: {
-    singular: "Recommendation",
-    plural: "Recommendations"
-  },
+  labels: { singular: "Recommendation", plural: "Recommendations" },
   admin: {
     defaultColumns: ["title", "category", "location", "approved", "submittedBy", "updatedAt"],
-    description: "Curated places, products, books, music, objects, culture, and independent brands.",
     listSearchableFields: ["title", "category", "location", "description"],
     useAsTitle: "title"
   },
+  access: protectedAccess,
   fields: [
     { name: "title", type: "text", required: true },
     slugField,
-    {
-      name: "category",
-      type: "select",
-      required: true,
-      options: [
-        { label: "Coffee", value: "coffee" },
-        { label: "Restaurants", value: "restaurants" },
-        { label: "Hotels", value: "hotels" },
-        { label: "Books", value: "books" },
-        { label: "Music", value: "music" },
-        { label: "Objects", value: "objects" },
-        { label: "Home", value: "home" },
-        { label: "Kids", value: "kids" },
-        { label: "Culture", value: "culture" },
-        { label: "Independent brands", value: "independent-brands" }
-      ]
-    },
-    { name: "location", type: "text", admin: { placeholder: "London, online, Margate..." } },
-    { name: "description", type: "textarea", required: true, admin: { rows: 7 } },
+    { name: "category", type: "text", required: true },
+    { name: "location", type: "text" },
+    { name: "description", type: "textarea", required: true },
     { name: "image", type: "upload", relationTo: "media" },
-    { name: "link", type: "text", admin: { placeholder: "https://..." } },
+    { name: "link", type: "text" },
     { name: "submittedBy", type: "relationship", relationTo: "members" },
-    {
-      name: "approved",
-      type: "checkbox",
-      defaultValue: false,
-      admin: { description: "Only approved recommendations should appear in the member library." }
-    },
+    { name: "approved", type: "checkbox", defaultValue: false },
     tagsField
   ]
 };
 
 export const ConciergeRequests: CollectionConfig = {
   slug: "concierge-requests",
-  labels: {
-    singular: "Concierge request",
-    plural: "Concierge requests"
-  },
+  labels: { singular: "Concierge request", plural: "Concierge requests" },
   admin: {
     defaultColumns: ["member", "category", "location", "status", "reviewStatus", "updatedAt"],
-    description: "Member requests that need AI drafting and human review before sending.",
     listSearchableFields: ["request", "category", "location", "budget", "finalResponse"],
     useAsTitle: "request"
   },
+  access: protectedAccess,
   fields: [
+    { name: "member", type: "relationship", relationTo: "members", required: true },
+    { name: "request", type: "textarea", required: true },
+    { name: "category", type: "text" },
+    { name: "location", type: "text" },
+    { name: "budget", type: "text" },
     {
-      type: "tabs",
-      tabs: [
-        {
-          label: "Request",
-          fields: [
-            { name: "member", type: "relationship", relationTo: "members", required: true },
-            { name: "request", type: "textarea", required: true, admin: { rows: 8 } },
-            { name: "category", type: "text", admin: { placeholder: "Travel, gifts, food, family..." } },
-            { name: "location", type: "text" },
-            { name: "budget", type: "text" }
-          ]
-        },
-        {
-          label: "Response",
-          fields: [
-            {
-              name: "status",
-              type: "select",
-              defaultValue: "new",
-              options: statusOptions.concierge
-            },
-            {
-              name: "reviewStatus",
-              type: "select",
-              options: [
-                { label: "Not started", value: "not_started" },
-                { label: "In review", value: "in_review" },
-                { label: "Approved", value: "approved" },
-                { label: "Rejected", value: "rejected" }
-              ]
-            },
-            { name: "aiDraftResponse", type: "textarea", admin: { rows: 10 } },
-            { name: "finalResponse", type: "textarea", admin: { rows: 10 } },
-            { name: "sourceRecommendations", type: "relationship", relationTo: "recommendations", hasMany: true },
-            { name: "publishedToLibrary", type: "checkbox", defaultValue: false }
-          ]
-        }
+      name: "status",
+      type: "select",
+      defaultValue: "new",
+      options: [
+        { label: "New", value: "new" },
+        { label: "AI drafted", value: "ai_drafted" },
+        { label: "Needs review", value: "needs_review" },
+        { label: "Answered", value: "answered" },
+        { label: "Published", value: "published" },
+        { label: "Archived", value: "archived" }
       ]
-    }
+    },
+    {
+      name: "reviewStatus",
+      type: "select",
+      defaultValue: "not_started",
+      options: [
+        { label: "Not started", value: "not_started" },
+        { label: "In review", value: "in_review" },
+        { label: "Approved", value: "approved" },
+        { label: "Rejected", value: "rejected" }
+      ]
+    },
+    { name: "aiDraftResponse", type: "textarea" },
+    { name: "finalResponse", type: "textarea" },
+    { name: "sourceRecommendations", type: "relationship", relationTo: "recommendations", hasMany: true },
+    { name: "publishedToLibrary", type: "checkbox", defaultValue: false }
   ]
 };
 
 export const ConciergeKnowledgeBase: CollectionConfig = {
   slug: "concierge-knowledge-base",
-  labels: {
-    singular: "Concierge knowledge item",
-    plural: "Concierge knowledge base"
-  },
+  labels: { singular: "Concierge knowledge item", plural: "Concierge knowledge base" },
   admin: {
     defaultColumns: ["title", "category", "location", "sourceType", "approved", "updatedAt"],
-    description: "Approved knowledge that helps the Concierge sound selective, local, and Well Nice.",
     listSearchableFields: ["title", "category", "location", "description", "whyItsWellNice"],
     useAsTitle: "title"
   },
+  access: protectedAccess,
   fields: [
     { name: "title", type: "text", required: true },
     slugField,
     { name: "category", type: "text", required: true },
     { name: "location", type: "text" },
-    { name: "description", type: "textarea", required: true, admin: { rows: 7 } },
-    {
-      name: "whyItsWellNice",
-      type: "textarea",
-      required: true,
-      admin: { description: "Explain why this belongs in the Well Nice universe.", rows: 5 }
-    },
+    { name: "description", type: "textarea", required: true },
+    { name: "whyItsWellNice", type: "textarea", required: true },
     tagsField,
     { name: "image", type: "upload", relationTo: "media" },
-    {
-      name: "sourceType",
-      type: "select",
-      options: [
-        { label: "Editorial", value: "editorial" },
-        { label: "Community", value: "community" },
-        { label: "Concierge", value: "concierge" },
-        { label: "Partner", value: "partner" },
-        { label: "Manual", value: "manual" }
-      ]
-    },
+    { name: "sourceType", type: "text" },
     { name: "approved", type: "checkbox", defaultValue: false }
   ]
 };
 
 export const Drops: CollectionConfig = {
   slug: "drops",
-  labels: {
-    singular: "Drop / benefit",
-    plural: "Drops & benefits"
-  },
+  labels: { singular: "Drop / benefit", plural: "Drops & benefits" },
   admin: {
     defaultColumns: ["title", "visibility", "discountCode", "startDate", "endDate"],
-    description: "Early access, discount codes, partner offers, hidden products, and limited releases.",
     listSearchableFields: ["title", "description", "discountCode"],
     useAsTitle: "title"
   },
+  access: protectedAccess,
   fields: [
     { name: "title", type: "text", required: true },
-    { name: "description", type: "textarea", required: true, admin: { rows: 7 } },
+    { name: "description", type: "textarea", required: true },
     { name: "image", type: "upload", relationTo: "media" },
-    { name: "ctaUrl", type: "text", admin: { placeholder: "https://..." } },
-    { name: "discountCode", type: "text", admin: { placeholder: "WELLNICE15" } },
+    { name: "ctaUrl", type: "text" },
+    { name: "discountCode", type: "text" },
     {
       name: "visibility",
       type: "select",
@@ -672,15 +466,12 @@ export const Drops: CollectionConfig = {
 
 export const Reports: CollectionConfig = {
   slug: "reports",
-  labels: {
-    singular: "Moderation report",
-    plural: "Moderation reports"
-  },
+  labels: { singular: "Moderation report", plural: "Moderation reports" },
   admin: {
     defaultColumns: ["contentType", "contentId", "reporter", "status", "updatedAt"],
-    description: "Reports from members that need moderator review.",
     useAsTitle: "reason"
   },
+  access: protectedAccess,
   fields: [
     { name: "reporter", type: "relationship", relationTo: "members", required: true },
     {
@@ -695,7 +486,7 @@ export const Reports: CollectionConfig = {
       required: true
     },
     { name: "contentId", type: "text", required: true },
-    { name: "reason", type: "textarea", required: true, admin: { rows: 6 } },
+    { name: "reason", type: "textarea", required: true },
     {
       name: "status",
       type: "select",

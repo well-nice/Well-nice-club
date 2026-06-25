@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import "./globals.css";
+import "../globals.css";
 
 export const metadata: Metadata = {
   title: "Well Nice Club",
@@ -10,15 +10,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const content = <body>{children}</body>;
 
   if (publishableKey) {
     return (
-      <ClerkProvider publishableKey={publishableKey}>
-        <html lang="en">{content}</html>
-      </ClerkProvider>
+      <html lang="en">
+        <body>
+          <ClerkProvider publishableKey={publishableKey}>{children}</ClerkProvider>
+        </body>
+      </html>
     );
   }
 
-  return <html lang="en">{content}</html>;
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
 }

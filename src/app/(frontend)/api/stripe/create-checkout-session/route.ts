@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isClerkConfigured } from "@/lib/member-access";
 import { getCheckoutUrls, getPriceId, getStripe } from "@/lib/stripe";
 import { getAppUrl } from "@/lib/utils";
 
@@ -16,11 +17,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid membership plan." }, { status: 400 });
   }
 
-  const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY);
-  const { userId } = hasClerk ? await auth() : { userId: "local-preview-user" };
+  if (!isClerkConfigured()) {
+    return NextResponse.json(
+      { error: "Clerk is required for checkout.", next: "Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY." },
+      { status: 503 }
+    );
+  }
+
+  const { userId } = await auth();
 
   if (!userId) {
-    return NextResponse.redirect(`${getAppUrl()}/sign-up?redirect_url=/join`, 303);
+    const redirectUrl = `/join?plan=${encodeURIComponent(parsed.data.planId)}`;
+    return NextResponse.redirect(`${getAppUrl()}/sign-up?redirect_url=${encodeURIComponent(redirectUrl)}`, 303);
   }
 
   const stripe = getStripe();

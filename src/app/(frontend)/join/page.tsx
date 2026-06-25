@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardEyebrow, CardTitle } from "@/components/ui/card";
 import { membershipPlans } from "@/lib/data";
 
-export default function JoinPage() {
+type JoinPageProps = {
+  searchParams: Promise<{
+    plan?: string;
+  }>;
+};
+
+export default async function JoinPage({ searchParams }: JoinPageProps) {
+  const { plan: selectedPlanId } = await searchParams;
+
   return (
     <div className="min-h-screen bg-[#f7f6f2]">
       <PublicHeader />
@@ -18,11 +26,19 @@ export default function JoinPage() {
           <p className="mt-6 text-lg leading-8 text-neutral-600">
             Access is granted only after Stripe confirms the subscription through a verified webhook.
           </p>
+          {selectedPlanId ? (
+            <p className="mt-4 rounded-full bg-white px-4 py-2 text-sm text-neutral-600">
+              Continue with your selected plan below.
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
           {membershipPlans.map((plan) => (
-            <Card className="flex flex-col" key={plan.id}>
+            <Card
+              className={plan.id === selectedPlanId ? "flex flex-col border-neutral-950" : "flex flex-col"}
+              key={plan.id}
+            >
               <CardEyebrow>{plan.name}</CardEyebrow>
               <div className="mt-5 flex items-end gap-2">
                 <span className="text-5xl font-semibold tracking-[-0.08em]">{plan.price}</span>
@@ -40,7 +56,7 @@ export default function JoinPage() {
               <form action="/api/stripe/create-checkout-session" className="mt-8" method="post">
                 <input name="planId" type="hidden" value={plan.id} />
                 <Button className="w-full" type="submit">
-                  Select {plan.name}
+                  {plan.id === selectedPlanId ? `Continue with ${plan.name}` : `Select ${plan.name}`}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </form>
