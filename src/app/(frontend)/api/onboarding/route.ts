@@ -6,6 +6,7 @@ import { PayloadNotConfiguredError, getPayloadClient } from "@/lib/payload/clien
 import { toPayloadArray } from "@/lib/payload/format";
 
 export async function POST(request: Request) {
+  const expectsJson = request.headers.get("content-type")?.includes("application/json") ?? false;
   const body = await readRequestBody(request);
   const parsed = parseJson(onboardingSchema, body);
 
@@ -66,6 +67,10 @@ export async function POST(request: Request) {
       },
       overrideAccess: true
     });
+
+    if (!expectsJson) {
+      return NextResponse.redirect(new URL("/app", request.url), 303);
+    }
 
     return NextResponse.json(
       {
