@@ -24,7 +24,7 @@ export default async function SectionPage({ params }: SectionPageProps) {
   const isAccount = section === "account";
 
   return (
-    <div className="px-5 py-8 sm:px-8 lg:px-12">
+    <div className="wn-screen px-5 py-8 sm:px-8 lg:px-12">
       <main className="mx-auto max-w-6xl">
         <div className="grid gap-6 border-b border-neutral-200 pb-8 lg:grid-cols-[0.85fr_1.15fr]">
           <section>

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardEyebrow, CardTitle } from "@/components/ui/card";
 
@@ -5,11 +6,14 @@ const interests = ["Food", "Home", "Style", "Travel", "Family", "Culture", "Musi
 
 export default function OnboardingPage() {
   return (
-    <div className="min-h-screen bg-[#f7f6f2] px-5 py-10 text-neutral-950 sm:px-8">
+    <div className="min-h-screen bg-[#efefed] px-5 py-10 text-neutral-950 sm:px-8">
       <main className="mx-auto max-w-5xl">
-        <p className="text-lg font-semibold tracking-[-0.06em]">w/n</p>
+        <Image alt="Well Nice" height={29} priority src="/brand/well-nice-short-mark.png" width={72} />
         <div className="mt-12 grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
-          <section>
+          <section className="wn-screen">
+            <div className="mb-8 flex h-[72px] w-[72px] items-center justify-center rounded-[1.25rem] bg-neutral-950 p-4">
+              <Image alt="Well Nice" className="invert" height={29} src="/brand/well-nice-short-mark.png" width={72} />
+            </div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Onboarding</p>
             <h1 className="mt-4 text-5xl font-semibold leading-none tracking-[-0.07em]">
               Set the tone before you enter.
@@ -19,7 +23,7 @@ export default function OnboardingPage() {
             </p>
           </section>
 
-          <Card>
+          <Card className="wn-screen">
             <form action="/api/onboarding" className="space-y-8" method="post">
               <section>
                 <CardEyebrow>Step 1 · Profile</CardEyebrow>

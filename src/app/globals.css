@@ -1,8 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #f7f6f2;
+  --background: #efefed;
   --foreground: #111111;
+  --wn-card: #ffffff;
+  --wn-muted: #f1f1ef;
+  --wn-muted-foreground: #77746e;
+  --wn-border: rgba(0, 0, 0, 0.08);
+  --wn-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --wn-shadow-lift: 0 16px 44px -28px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -18,9 +25,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family:
-    Arial,
+    Inter,
     Helvetica,
     sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
@@ -36,15 +44,96 @@ select {
 
 .field {
   width: 100%;
-  border-radius: 1.25rem;
-  border: 1px solid #d9d7d0;
-  background: rgba(255, 255, 255, 0.75);
-  padding: 0.9rem 1rem;
+  border-radius: 0.875rem;
+  border: 1.5px solid #e4e4e1;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.95rem 1rem;
   color: #111111;
   outline: none;
+  box-shadow: var(--wn-shadow);
 }
 
 .field:focus {
   border-color: #111111;
   box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.08);
+}
+
+@keyframes wnfade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes wnfloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-34px);
+  }
+}
+
+@keyframes wnspin-once {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wn-screen {
+  animation: wnfade 0.28s ease both;
+}
+
+.wn-tap {
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.wn-tap:active {
+  transform: scale(0.97);
+}
+
+.wn-card {
+  border: 1px solid var(--wn-border);
+  border-radius: 1.375rem;
+  background: var(--wn-card);
+  box-shadow: var(--wn-shadow);
+}
+
+.wn-lift {
+  box-shadow: var(--wn-shadow-lift);
+}
+
+.wn-phone {
+  width: min(100%, 404px);
+  border-radius: 3.5rem;
+  background: #0a0a0a;
+  padding: 0.7rem;
+  box-shadow: 0 24px 80px -36px rgba(0, 0, 0, 0.7);
+}
+
+.wn-phone-screen {
+  min-height: 760px;
+  overflow: hidden;
+  border-radius: 2.8rem;
+  background: var(--background);
+}
+
+.wn-home-indicator {
+  width: 134px;
+  height: 5px;
+  border-radius: 999px;
+  background: #111;
 }

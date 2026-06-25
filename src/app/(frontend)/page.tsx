@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import { PublicHeader } from "@/components/public-header";
 import { Button } from "@/components/ui/button";
@@ -33,23 +34,26 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="rounded-[2.5rem] border border-neutral-200 bg-[#111] p-4 text-white shadow-2xl shadow-neutral-300/60">
-            <div className="rounded-[2rem] border border-white/10 bg-[#181818] p-6">
-              <div className="flex items-center justify-between border-b border-white/10 pb-5">
-                <span className="text-sm font-medium tracking-[-0.03em]">Well Nice Club</span>
-                <span className="text-xs text-white/50">9:41</span>
+          <div className="wn-phone mx-auto text-neutral-950">
+            <div className="wn-phone-screen p-6">
+              <div className="flex items-center justify-between pb-5">
+                <Image alt="Well Nice" height={24} src="/brand/well-nice-short-mark.png" width={61} />
+                <span className="text-xs font-semibold text-neutral-500">9:41</span>
               </div>
               <div className="space-y-4 py-8">
                 {feedCards.map((card) => (
-                  <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5" key={card.title}>
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">{card.label}</p>
+                  <div className="wn-card p-5" key={card.title}>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-400">{card.label}</p>
                     <h2 className="mt-3 text-2xl font-semibold tracking-[-0.05em]">{card.title}</h2>
-                    <p className="mt-3 text-sm leading-6 text-white/60">{card.body}</p>
+                    <p className="mt-3 text-sm leading-6 text-neutral-600">{card.body}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-full bg-white px-5 py-3 text-sm font-medium text-neutral-950">
+              <div className="rounded-2xl bg-neutral-950 px-5 py-4 text-sm font-semibold text-white">
                 Ask the Concierge for something good...
+              </div>
+              <div className="mt-8 flex justify-center">
+                <div className="wn-home-indicator" />
               </div>
             </div>
           </div>

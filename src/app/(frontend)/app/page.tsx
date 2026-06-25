@@ -6,9 +6,9 @@ import { drops, feedCards, recommendations, upcomingEvents } from "@/lib/data";
 
 export default function MemberHomePage() {
   return (
-    <div className="px-5 py-8 sm:px-8 lg:px-12">
+    <div className="wn-screen px-5 py-8 sm:px-8 lg:px-12">
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-5 border-b border-neutral-200 pb-8 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-5 pb-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Member home</p>
             <h1 className="mt-3 text-5xl font-semibold tracking-[-0.07em]">Good things, gently sorted.</h1>
@@ -21,7 +21,22 @@ export default function MemberHomePage() {
           </Button>
         </div>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+        <Card className="mt-4 bg-neutral-950 p-5 text-white sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardEyebrow className="text-white/45">Today</CardEyebrow>
+              <CardTitle className="mt-2 text-2xl text-white">Ask the concierge for something good.</CardTitle>
+              <CardDescription className="mt-2 text-white/60">
+                A place, product, trip, gift, family plan, or a more specific version of something useful.
+              </CardDescription>
+            </div>
+            <Button asChild className="bg-white text-neutral-950 hover:bg-neutral-100">
+              <Link href="/app/concierge">Start</Link>
+            </Button>
+          </div>
+        </Card>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <section className="space-y-5">
             {feedCards.map((card) => (
               <Card key={card.title}>
@@ -52,10 +67,10 @@ export default function MemberHomePage() {
           </section>
 
           <aside className="space-y-5">
-            <Card className="bg-neutral-950 text-white">
-              <CardEyebrow className="text-white/45">Concierge prompt</CardEyebrow>
-              <CardTitle className="mt-3 text-white">What should we find for you?</CardTitle>
-              <CardDescription className="mt-3 text-white/60">
+            <Card className="bg-white">
+              <CardEyebrow>Concierge prompt</CardEyebrow>
+              <CardTitle className="mt-3">What should we find for you?</CardTitle>
+              <CardDescription className="mt-3">
                 Ask for a place, product, trip, gift, family plan, or a more specific version of &quot;something good&quot;.
               </CardDescription>
               <Button asChild className="mt-6" variant="outline">
