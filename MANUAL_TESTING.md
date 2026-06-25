@@ -70,6 +70,8 @@ Use any future expiry date, any CVC, and any postal code.
 
 ## Full flow checklist
 
+> Note: Clerk may render a Cloudflare Turnstile challenge on the sign-up screen. If you are using headless automation, sign-up can stall with an empty `cf-turnstile-response`. Complete this step in a real browser session.
+
 1. Visit `/sign-up`.
 2. Create a Clerk user.
 3. Visit `/join`.
